@@ -1,23 +1,66 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from "react";
+import "./App.css";
 
 function App() {
+  const [messages, setMessages] = useState([
+    { role: "assistant", content: "Olá! Como posso ajudar?" }
+  ]);
+
+  const [input, setInput] = useState("");
+
+  function sendMessage() {
+    if (!input.trim()) return;
+
+    // mensagem do utilizador
+    setMessages(prev => [
+      ...prev,
+      { role: "user", content: input }
+    ]);
+
+    fetch("http://localhost:4000/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ question: input })
+    })
+    .then(res => res.json())
+    .then(data => {
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: data.answer }
+      ]);
+    });
+
+    setInput("");
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="chat-container">
+      <div className="chat-box">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`message ${msg.role}`}
+          >
+            {msg.content}
+          </div>
+        ))}
+      </div>
+
+      <div className="chat-input">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => {
+          if (e.key === "Enter") {
+            sendMessage();
+          }
+          }}
+          placeholder="Escreve a tua dúvida..."
+        />
+        <button onClick={sendMessage}>Enviar</button>
+      </div>
     </div>
   );
 }
